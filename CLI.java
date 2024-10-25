@@ -53,7 +53,9 @@ public class CLI {
                 break;
             case "rmdir":
                 removeDirectory(parts);
-                break;
+                break; 
+            case "cd":
+                changDirectory(parts);
             case "touch":
                 touchFile(parts);
                 break;
@@ -120,6 +122,19 @@ public class CLI {
             }
         } else {
             System.err.println("rmdir: missing argument");
+        }
+    }
+    private static void changeDirectory(String[] parts) {
+        if (parts.length > 1) {
+            File newDir = new File(parts[1]);
+            if (newDir.exists() && newDir.isDirectory()) {
+                System.setProperty("user.dir", newDir.getAbsolutePath());
+                System.out.println("Changed directory to: " + newDir.getAbsolutePath());
+            } else {
+                System.err.println("cd: no such directory: " + parts[1]);
+            }
+        } else {
+            System.err.println("cd: missing argument");
         }
     }
 
