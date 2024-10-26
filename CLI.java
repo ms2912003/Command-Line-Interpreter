@@ -53,9 +53,7 @@ public class CLI {
                 break;
             case "rmdir":
                 removeDirectory(parts);
-                break; 
-            case "cd":
-                changDirectory(parts);
+                break;
             case "touch":
                 touchFile(parts);
                 break;
@@ -124,21 +122,8 @@ public class CLI {
             System.err.println("rmdir: missing argument");
         }
     }
-    private static void changeDirectory(String[] parts) {
-        if (parts.length > 1) {
-            File newDir = new File(parts[1]);
-            if (newDir.exists() && newDir.isDirectory()) {
-                System.setProperty("user.dir", newDir.getAbsolutePath());
-                System.out.println("Changed directory to: " + newDir.getAbsolutePath());
-            } else {
-                System.err.println("cd: no such directory: " + parts[1]);
-            }
-        } else {
-            System.err.println("cd: missing argument");
-        }
-    }
 
-    private static void touchFile(String[] parts) {
+    static void touchFile(String[] parts) {
         if (parts.length > 1) {
             try {
                 new File(parts[1]).createNewFile();
@@ -151,7 +136,7 @@ public class CLI {
         }
     }
 
-    private static void removeFile(String[] parts) {
+    static void removeFile(String[] parts) {
         if (parts.length > 1) {
             File file = new File(parts[1]);
             if (file.exists()) {
@@ -165,7 +150,7 @@ public class CLI {
         }
     }
 
-    private static void displayFile(String[] parts) {
+    static void displayFile(String[] parts) {
         if (parts.length > 1) {
             try (BufferedReader br = new BufferedReader(new FileReader(parts[1]))) {
                 String line;
@@ -180,7 +165,7 @@ public class CLI {
         }
     }
 
-    private static void moveFile(String[] parts) {
+    static void moveFile(String[] parts) {
         if (parts.length < 3) {
             System.err.println("mv: missing arguments");
             return;
@@ -266,7 +251,7 @@ public class CLI {
         }
     }
 
-    private static void copyFile(File source, File destination) throws IOException {
+    static void copyFile(File source, File destination) throws IOException {
         try (InputStream in = new FileInputStream(source);
              OutputStream out = new FileOutputStream(destination)) {
 
@@ -278,7 +263,7 @@ public class CLI {
         }
     }
 
-    private static void listDirectory(String[] parts) {
+    static void listDirectory(String[] parts) {
         File dir = new File("."); // Default to the current directory
         boolean showAll = false; // Option to show hidden files
         boolean reverseOrder = false; // Option to reverse order
@@ -295,7 +280,7 @@ public class CLI {
         }
 
         if (!dir.exists() || !dir.isDirectory()) {
-            System.err.println("ls: no such directory: " + dir.getAbsolutePath());
+            System.out.println("No files found or directory cannot be read.");
             return;
         }
 
@@ -311,7 +296,7 @@ public class CLI {
                 Collections.reverse(Arrays.asList(files));
             }
 
-            System.out.println("Listing directory: " + dir.getAbsolutePath());
+            System.out.println("Listing directory: ");
             for (String file : files) {
                 System.out.println(file);
             }
@@ -323,7 +308,7 @@ public class CLI {
     // New command handling methods for redirection and piping
 
     // Handle output redirection ('>' and '>>')
-    private static void redirectCommand(String command) {
+    static void redirectCommand(String command) {
         // Split command around '>' and trim the parts
         String[] parts = command.contains(">>") ? command.split(">>") : command.split(">");
         String leftCommand = parts[0].trim(); // The command to execute (e.g., "ls")
