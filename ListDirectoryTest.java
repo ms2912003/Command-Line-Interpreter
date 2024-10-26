@@ -14,6 +14,12 @@ import java.io.File;
 import java.io.FileWriter;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import java.io.*;
 import org.os.CLI;
 
 public class ListDirectoryTest {
@@ -203,4 +209,66 @@ class CLIMoveFileTest {
         // Cleanup after test
         newFile.delete();
     }
+}
+
+
+
+
+public class CLITesting {
+    private String originalDir;
+
+    @Before
+    public void setUp() {
+        // Save the original working directory
+        originalDir = System.getProperty("user.dir");
+    }
+
+    @After
+    public void tearDown() {
+        // Restore the original directory after each test
+        System.setProperty("user.dir", originalDir);
+        // Clean up any created directories
+        File dir = new File("testDir");
+        if (dir.exists()) {
+            dir.delete();
+        }
+    }
+
+    @Test
+    public void testChangeDirectory() {
+        // Arrange
+        String testDirName = "testDir";
+        new File(testDirName).mkdir(); // Create a test directory
+
+        // Act
+        CLI.executeCommand("cd " + testDirName); // Replace CLI with your actual class name
+
+        // Assert
+        String expectedDir = new File(testDirName).getAbsolutePath();
+        assertEquals(expectedDir, System.getProperty("user.dir"));
+
+        // Clean up
+        new File(testDirName).delete();
+    }
+
+    @Test
+    public void testChangeToNonExistingDirectory() {
+        // Arrange
+        String nonExistingDir = "nonExistingDir";
+
+        // Act
+        CLI.executeCommand("cd " + nonExistingDir); // Replace CLI with your actual class name
+
+        // Assert
+        assertEquals(originalDir, System.getProperty("user.dir"));
+    }
+
+    @Test
+    public void testMissingArgument() {
+        // Act
+        CLI.executeCommand("cd"); // Replace CLI with your actual class name
+
+        // Assert
+        assertEquals(originalDir, System.getProperty("user.dir"));
+    }
 }
