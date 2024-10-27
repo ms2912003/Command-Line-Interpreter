@@ -1,5 +1,7 @@
 package org.os;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -263,4 +265,110 @@ public class CommandLIneInterpreterTest {
         assertTrue(output.contains("rmdir"));
     }
 
+    // List Directrory Test
+        private Path tempDir1;
+        private Path hiddenFile;
+        private Path visibleFile1;
+        private Path visibleFile2;
+
+        private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        private final PrintStream originalOut = System.out;
+
+        @BeforeEach
+        public void setUp3() throws IOException {
+            // Create a temporary directory for testing
+            tempDir1 = Files.createTempDirectory("testDir");
+
+            // Create files in the temporary directory
+            hiddenFile = Files.createFile(tempDir1.resolve(".hiddenFile"));
+            visibleFile1 = Files.createFile(tempDir1.resolve("file1.txt"));
+            visibleFile2 = Files.createFile(tempDir1.resolve("file2.txt"));
+
+            // Redirect output to capture it for testing
+            System.setOut(new PrintStream(outputStream));
+        }
+
+        @AfterEach
+        public void tearDown4() throws IOException {
+            // Clean up the temporary directory and files
+            Files.deleteIfExists(hiddenFile);
+            Files.deleteIfExists(visibleFile1);
+            Files.deleteIfExists(visibleFile2);
+            Files.deleteIfExists(tempDir);
+
+            // Reset the output stream
+            System.setOut(originalOut);
+        }
+
+        @Test
+        public void testListDirectoryWithoutOptions() {
+            String[] parts = {tempDir1.toString()};
+            CLI.executeCommand("ls" + " " + parts[0]);
+            String output = outputStream.toString();
+
+            // Verify the output contains only visible files
+            assertTrue(output.contains("file1.txt"));
+            assertTrue(output.contains("file2.txt"));
+            assertFalse(output.contains(".hiddenFile"));
+        }
+
+        @Test
+        public void testListDirectoryWithShowAll() {
+            String[] parts = {tempDir1.toString(), "-a"};
+            CLI.executeCommand("ls" + " " + parts[0]+" " + parts[1]);
+            String output = outputStream.toString();
+
+            // Verify the output contains hidden and visible files
+            assertTrue(output.contains(".hiddenFile"));
+            assertTrue(output.contains("file1.txt"));
+            assertTrue(output.contains("file2.txt"));
+        }
+
+        @Test
+        public void testListDirectoryWithReverseOrder() {
+            String[] parts = {tempDir1.toString(), "-r"};
+            CLI.executeCommand("ls" + " " + parts[0]+" " + parts[1]);
+            String output = outputStream.toString();
+
+            // Split the output by lines and check the order
+            String[] lines = output.split(System.lineSeparator());
+            assertEquals("file2.txt", lines[1]); // Assuming output is sorted and reversed
+            assertEquals("file1.txt", lines[2]);
+        }
+
+        @Test
+        public void testListNonExistentDirectory() {
+            String[] parts = {"non_existent_directory"};
+            CLI.executeCommand("ls" + " " + parts[0]);
+            String output = outputStream.toString();
+
+            File dir = new File(parts[0]);
+            // Verify the output indicates that the directory cannot be read
+            assertTrue(output.contains("No files found or directory cannot be read."));
+
+            // Clean up
+            dir.delete();
+        }
+
+    @Test
+    public void testListEmptyDirectory() throws IOException {
+        // Set up a ByteArrayOutputStream to capture output directly
+        ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
+        PrintStream originalOut = System.out;
+        System.setOut(new PrintStream(testOutput));
+
+        // Create a temporary empty directory
+        Path emptyDir = Files.createTempDirectory("emptyDir");
+        String emptyDirPath = emptyDir.toString();
+
+        // Execute the 'ls' command
+        CLI.executeCommand("ls " + emptyDirPath);
+
+        // Restore original System.out
+        System.setOut(originalOut);
+
+        // Capture the output
+        String output = testOutput.toString().trim();
+        System.out.println("Actual Output: " + output);
+    }
 }
