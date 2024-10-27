@@ -191,3 +191,99 @@ public class CLITesting {
         assertEquals(originalDir, System.getProperty("user.dir"));
     }
 }
+
+public class DirectoryListerTest {
+
+    private Path tempDir;
+    private Path hiddenFile;
+    private Path visibleFile1;
+    private Path visibleFile2;
+
+    private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    private final PrintStream originalOut = System.out;
+
+    @BeforeEach
+    public void setUp() throws IOException {
+        // Create a temporary directory for testing
+        tempDir = Files.createTempDirectory("testDir");
+
+        // Create files in the temporary directory
+        hiddenFile = Files.createFile(tempDir.resolve(".hiddenFile"));
+        visibleFile1 = Files.createFile(tempDir.resolve("file1.txt"));
+        visibleFile2 = Files.createFile(tempDir.resolve("file2.txt"));
+
+        // Redirect output to capture it for testing
+        System.setOut(new PrintStream(outputStream));
+    }
+
+    @AfterEach
+    public void tearDown() throws IOException {
+        // Clean up the temporary directory and files
+        Files.deleteIfExists(hiddenFile);
+        Files.deleteIfExists(visibleFile1);
+        Files.deleteIfExists(visibleFile2);
+        Files.deleteIfExists(tempDir);
+        
+        // Reset the output stream
+        System.setOut(originalOut);
+    }
+
+    @Test
+    public void testListDirectoryWithoutOptions() {
+        String[] parts = {tempDir.toString()};
+        YourClassName.listDirectory(parts); // Replace with the actual class name
+        String output = outputStream.toString();
+
+        // Verify the output contains only visible files
+        assertTrue(output.contains("file1.txt"));
+        assertTrue(output.contains("file2.txt"));
+        assertFalse(output.contains(".hiddenFile"));
+    }
+
+    @Test
+    public void testListDirectoryWithShowAll() {
+        String[] parts = {tempDir.toString(), "-a"};
+        YourClassName.listDirectory(parts); // Replace with the actual class name
+        String output = outputStream.toString();
+
+        // Verify the output contains hidden and visible files
+        assertTrue(output.contains(".hiddenFile"));
+        assertTrue(output.contains("file1.txt"));
+        assertTrue(output.contains("file2.txt"));
+    }
+
+    @Test
+    public void testListDirectoryWithReverseOrder() {
+        String[] parts = {tempDir.toString(), "-r"};
+        YourClassName.listDirectory(parts); // Replace with the actual class name
+        String output = outputStream.toString();
+
+        // Split the output by lines and check the order
+        String[] lines = output.split(System.lineSeparator());
+        assertEquals("file2.txt", lines[1]); // Assuming output is sorted and reversed
+        assertEquals("file1.txt", lines[2]);
+    }
+
+    @Test
+    public void testListNonExistentDirectory() {
+        String[] parts = {"non_existent_directory"};
+        YourClassName.listDirectory(parts); // Replace with the actual class name
+        String output = outputStream.toString();
+
+        // Verify the output indicates that the directory cannot be read
+        assertTrue(output.contains("No files found or directory cannot be read."));
+    }
+
+    @Test
+    public void testListEmptyDirectory() throws IOException {
+        Path emptyDir = Files.createTempDirectory("emptyDir");
+        String[] parts = {emptyDir.toString()};
+        YourClassName.listDirectory(parts); // Replace with the actual class name
+        String output = outputStream.toString();
+
+        // Verify the output indicates that the directory is empty
+        assertTrue(output.contains("Directory is empty or cannot be read."));
+
+        // Clean up
+        Files.delete(emptyDir);
+    }
