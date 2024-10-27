@@ -69,6 +69,12 @@ public class CLI {
             case "ls":
                 listDirectory(parts);
                 break;
+            case "pwd":
+                printWorkingDirectory();
+                break;
+            case "cd":
+                changeDirectory(parts);
+                break;
             default:
                 System.err.println("Unknown command: " + cmd);
         }
@@ -108,7 +114,22 @@ public class CLI {
             System.err.println("mkdir: missing argument");
         }
     }
-
+    private static void changeDirectory(String[] parts) {
+        if (parts.length > 1) {
+            File newDir = new File(parts[1]);
+            if (newDir.exists() && newDir.isDirectory()) {
+                System.setProperty("user.dir", newDir.getAbsolutePath());
+                System.out.println("Changed directory to: " + newDir.getAbsolutePath());
+            } else {
+                System.err.println("cd: no such directory: " + parts[1]);
+            }
+        } else {
+            System.err.println("cd: missing argument");
+        }
+    }
+    private static void printWorkingDirectory() {
+        System.out.println(System.getProperty("user.dir"));
+    }
     private static void removeDirectory(String[] parts) {
         if (parts.length > 1) {
             File dir = new File(parts[1]);
