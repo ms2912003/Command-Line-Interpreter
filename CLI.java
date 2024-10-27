@@ -1,8 +1,13 @@
 package org.os;
+
 import java.io.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Scanner;
+import java.io.File;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class CLI {
 
@@ -79,7 +84,6 @@ public class CLI {
                 System.err.println("Unknown command: " + cmd);
         }
     }
-
     private static void helpCommand() {
         String helpText = """
                 Available commands:
@@ -114,23 +118,41 @@ public class CLI {
             System.err.println("mkdir: missing argument");
         }
     }
-    private static void changeDirectory(String[] parts) {
-        if (parts.length > 1) {
-            File newDir = new File(parts[1]);
-            if (newDir.exists() && newDir.isDirectory()) {
-                System.setProperty("user.dir", newDir.getAbsolutePath());
-                System.out.println("Changed directory to: " + newDir.getAbsolutePath());
-            } else {
-                System.err.println("cd: no such directory: " + parts[1]);
+
+    public static void changeDirectory(String[] parts) {
+        if (parts.length < 2) {
+            System.out.println("No directory specified.");
+            return;
+        }
+
+        String targetDir = parts[1];
+        try {
+            // Resolve the new path based on the current working directory
+            Path newPath = Paths.get(System.getProperty("user.dir")).resolve(targetDir).normalize();
+            File newDirectory = newPath.toFile();
+
+            // Check if the new directory exists and is a directory
+            if (!newDirectory.exists() || !newDirectory.isDirectory()) {
+                System.out.println("Directory does not exist or is not a directory: " + newPath);
+                return;
             }
-        } else {
-            System.err.println("cd: missing argument");
+
+            // Change the current working directory
+            System.setProperty("user.dir", newDirectory.getAbsolutePath());
+            System.out.println("Changed directory to: " + newDirectory.getAbsolutePath());
+        } catch (InvalidPathException e) {
+            System.out.println("Invalid path specified: " + targetDir);
+        } catch (SecurityException e) {
+            System.out.println("Permission denied to change directory: " + targetDir);
         }
     }
+
+
     private static void printWorkingDirectory() {
         System.out.println(System.getProperty("user.dir"));
     }
-    private static void removeDirectory(String[] parts) {
+
+    static void removeDirectory(String[] parts) {
         if (parts.length > 1) {
             File dir = new File(parts[1]);
             if (dir.exists() && dir.isDirectory()) {
@@ -366,7 +388,7 @@ public class CLI {
 
 
     // Handle piping ('|')
-    private static void pipeCommand(String command) {
+    static void pipeCommand(String command) {
         String[] commands = command.split("\\|");
         if (commands.length != 2) {
             System.err.println("Invalid pipe command.");
@@ -398,3 +420,5 @@ public class CLI {
         }
     }
 }
+
+
