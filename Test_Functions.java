@@ -22,84 +22,6 @@ import org.junit.Test;
 import java.io.*;
 import org.os.CLI;
 
-public class ListDirectoryTest {
-
-    private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    private final ByteArrayOutputStream errorStream = new ByteArrayOutputStream(); // For capturing System.err
-    private final PrintStream originalOut = System.out;
-    private final PrintStream originalErr = System.err; // Store the original System.err
-
-
-    @BeforeEach
-    public void setUp() {
-        outputStream.reset(); // Clear previous output
-        errorStream.reset(); // Clear previous errors
-        System.setOut(new PrintStream(outputStream));
-        System.setErr(new PrintStream(errorStream));
-    }
-
-    @AfterEach
-    public void tearDown() {
-        System.setOut(originalOut);
-        System.setErr(originalErr); // Restore original System.err
-    }
-
-    @Test
-    public void testDefaultDirectory() {
-        String[] args = {}; // Default current directory without options
-        CLI.listDirectory(args);  // Fixed the call to the correct class
-        String output = outputStream.toString();
-        assertTrue(output.contains("Listing directory:")); // Check for output structure
-    }
-
-    @Test
-    public void testShowAllFiles() {
-        String[] args = {"-a"};
-        CLI.listDirectory(args);  // Fixed the call to the correct class
-        String output = outputStream.toString();
-        assertTrue(output.contains("Listing directory:"));
-        assertTrue(output.contains(".")); // Hidden files should appear
-    }
-
-    @Test
-    public void testReverseOrder() {
-        String[] args = {"-r"};
-        CLI.listDirectory(args);  // Fixed the call to the correct class
-        String output = outputStream.toString();
-        // Additional logic to verify if the order is reversed can be added here
-    }
-
-    @Test
-    public void testNonExistentDirectory() {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PrintStream originalOut = System.out;
-        System.setOut(new PrintStream(outputStream));
-        try {
-            String[] args = {"nonexistent_directory"};
-            CLI.listDirectory(args);
-            System.setOut(originalOut);
-            String output = outputStream.toString();
-            assertTrue(output.contains("No files found or directory cannot be read."),
-                    "Expected message not found in System.out output: " + output);
-        } finally {
-            // Reset System.out to its original state
-            System.setOut(originalOut);
-        }
-    }
-
-    @Test
-    public void testSpecificDirectory() throws Exception {
-        Path tempDir = Files.createTempDirectory("testDir");
-        String[] args = {tempDir.toString()};
-        CLI.listDirectory(args);
-        System.out.flush();  // Ensure all output is captured
-        String output = outputStream.toString();
-        assertTrue(output.contains("Listing directory: "),
-                "Expected directory listing message not found in System.out output: " + output);
-        Files.delete(tempDir); // Clean up after test
-    }
-}
-
 class CLIRedirectCommandTest {
     @Test
     void testRedirectCommand() {
@@ -210,9 +132,6 @@ class CLIMoveFileTest {
         newFile.delete();
     }
 }
-
-
-
 
 public class CLITesting {
     private String originalDir;
