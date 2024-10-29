@@ -84,6 +84,7 @@ public class CLI {
                 System.err.println("Unknown command: " + cmd);
         }
     }
+
     private static void helpCommand() {
         String helpText = """
                 Available commands:
@@ -127,16 +128,22 @@ public class CLI {
 
         String targetDir = parts[1];
         try {
-            // Resolve the new path based on the current working directory
-            Path newPath = Paths.get(System.getProperty("user.dir")).resolve(targetDir).normalize();
-            File newDirectory = newPath.toFile();
+            Path currentPath = Paths.get(System.getProperty("user.dir"));
+            // If the targetDir starts with "..", resolve to the parent directory
+            Path newPath;
+            if (targetDir.equals("..")) {
+                newPath = currentPath.getParent();
+            } else {
+                // Resolve the new path based on the current working directory
+                newPath = Paths.get(System.getProperty("user.dir")).resolve(targetDir).normalize();
+            }
 
+            File newDirectory = newPath.toFile();
             // Check if the new directory exists and is a directory
             if (!newDirectory.exists() || !newDirectory.isDirectory()) {
                 System.out.println("Directory does not exist or is not a directory: " + newPath);
                 return;
             }
-
             // Change the current working directory
             System.setProperty("user.dir", newDirectory.getAbsolutePath());
             System.out.println("Changed directory to: " + newDirectory.getAbsolutePath());
@@ -156,8 +163,14 @@ public class CLI {
         if (parts.length > 1) {
             File dir = new File(parts[1]);
             if (dir.exists() && dir.isDirectory()) {
-                dir.delete();
-                System.out.println("Directory removed: " + parts[1]);
+                // Check if the directory is empty
+                String[] contents = dir.list();
+                if (contents != null && contents.length > 0) {
+                    System.err.println("rmdir: failed to remove '" + parts[1] + "': Directory not empty");
+                } else {
+                    dir.delete();
+                    System.out.println("Directory removed: " + parts[1]);
+                }
             } else {
                 System.err.println("rmdir: no such directory: " + parts[1]);
             }
@@ -165,6 +178,7 @@ public class CLI {
             System.err.println("rmdir: missing argument");
         }
     }
+
 
     static void touchFile(String[] parts) {
         if (parts.length > 1) {
@@ -182,6 +196,9 @@ public class CLI {
     static void removeFile(String[] parts) {
         if (parts.length > 1) {
             File file = new File(parts[1]);
+            if (file.isDirectory()) {
+                System.err.println("rm: cannot remove '" + parts[1] + "': Is a directory");
+            }
             if (file.exists()) {
                 file.delete();
                 System.out.println("File removed: " + parts[1]);
@@ -193,9 +210,25 @@ public class CLI {
         }
     }
 
+
     static void displayFile(String[] parts) {
         if (parts.length > 1) {
-            try (BufferedReader br = new BufferedReader(new FileReader(parts[1]))) {
+            // Handle the case where file names are provided
+            for (int i = 1; i < parts.length; i++) {
+                String fileName = parts[i];
+                try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        System.out.println(line);
+                    }
+                } catch (IOException e) {
+                    System.err.println("cat: " + e.getMessage() + " (file: " + fileName + ")");
+                }
+            }
+        } else {
+            // Handle the case with no arguments
+            System.out.println("Enter text :");
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
                 String line;
                 while ((line = br.readLine()) != null) {
                     System.out.println(line);
@@ -203,8 +236,6 @@ public class CLI {
             } catch (IOException e) {
                 System.err.println("cat: " + e.getMessage());
             }
-        } else {
-            System.err.println("cat: missing argument");
         }
     }
 
@@ -348,8 +379,6 @@ public class CLI {
         }
     }
 
-    // New command handling methods for redirection and piping
-
     // Handle output redirection ('>' and '>>')
     static void redirectCommand(String command) {
         // Split command around '>' and trim the parts
@@ -386,39 +415,76 @@ public class CLI {
         }
     }
 
+    // Example of how to execute commands (assuming you have an implementation)
+    static void executeCommand2(String command) {
+        // Here you would handle the command execution logic
+        // For demonstration, we can just print the command
+        if (command.startsWith("cat")) {
+            // Handle cat command separately, e.g., display file contents
+            // For now, we will just print the command
+            System.out.println("Executing command: " + command);
+            // You can add the actual logic to read from files here
+        } else {
+            System.out.println("Executing command: " + command);
+        }
+    }
 
     // Handle piping ('|')
     static void pipeCommand(String command) {
         String[] commands = command.split("\\|");
         if (commands.length != 2) {
-            System.err.println("Invalid pipe command.");
+            System.err.println("Invalid pipe command. Use format: command1 | command2");
             return;
         }
 
+        // Capture output of the first command
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintStream ps = new PrintStream(baos);
         PrintStream originalOut = System.out;
 
-        // Capture output of the first command
+        // Redirect output to the ByteArrayOutputStream
         System.setOut(ps);
-        executeCommand(commands[0].trim());
-        System.setOut(originalOut);
+        executeSingleCommand(commands[0].trim()); // Execute first command
+        System.setOut(originalOut); // Restore original output
 
-        // Feed the output of the first command as input to the second
+        // Pass the output to the second command
         InputStream inputStream = new ByteArrayInputStream(baos.toByteArray());
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
-        String line;
-        while (true) {
-            try {
-                line = reader.readLine();
-                if (line == null) break;
-                System.out.println(line); // Feed each line to the second command
-            } catch (IOException e) {
-                e.printStackTrace();
+        // Execute the second command with the output from the first command
+        executeWithInput(commands[1].trim(), reader);
+    }
+
+    static void executeSingleCommand(String command) {
+        // Handle specific commands (for demonstration)
+        if (command.equals("ls")) {
+            listDirectory(new String[]{"."});
+        } else if (command.startsWith("cat")) {
+            // Simulated 'cat' command logic
+            String[] parts = command.split(" ");
+            if (parts.length > 1) {
+                String fileName = parts[1];
+                System.out.println("Contents of " + fileName + ":");
+                System.out.println("This is a sample content of " + fileName);
             }
+        } else {
+            System.out.println("Unknown command: " + command);
+        }
+    }
+
+    static void executeWithInput(String command, BufferedReader inputReader) {
+        try {
+            if (command.equals("cat")) {
+                String line;
+                while ((line = inputReader.readLine()) != null) {
+                    System.out.println(line); // Output the content passed from the first command
+                }
+            } else {
+                System.out.println("Unknown command for piped input: " + command);
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading input: " + e.getMessage());
         }
     }
 }
-
 
