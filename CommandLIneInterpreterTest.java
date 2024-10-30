@@ -125,7 +125,7 @@ public class CommandLIneInterpreterTest {
     private Path fileInNonEmptyDir;
 
     @BeforeEach
-    public void setUp() throws IOException {
+    public void setUp1() throws IOException {
         // Set up an empty directory
         tempDir = Files.createTempDirectory("testDir");
 
@@ -266,109 +266,229 @@ public class CommandLIneInterpreterTest {
     }
 
     // List Directrory Test
-        private Path tempDir1;
-        private Path hiddenFile;
-        private Path visibleFile1;
-        private Path visibleFile2;
+    Path tempDir1;
+    Path hiddenFile;
+    Path visibleFile1;
+    Path visibleFile2;
 
-        private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        private final PrintStream originalOut = System.out;
+    private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    private final PrintStream originalOut = System.out;
 
-        @BeforeEach
-        public void setUp3() throws IOException {
-            // Create a temporary directory for testing
-            tempDir1 = Files.createTempDirectory("testDir");
+    @BeforeEach
+    public void setUp() throws IOException {
+        // Create a temporary directory for testing
+        tempDir1 = Files.createTempDirectory("testDir");
 
-            // Create files in the temporary directory
-            hiddenFile = Files.createFile(tempDir1.resolve(".hiddenFile"));
-            visibleFile1 = Files.createFile(tempDir1.resolve("file1.txt"));
-            visibleFile2 = Files.createFile(tempDir1.resolve("file2.txt"));
+        // Create files in the temporary directory
+        hiddenFile = Files.createFile(tempDir1.resolve(".hiddenFile"));
+        visibleFile1 = Files.createFile(tempDir1.resolve("file1.txt"));
+        visibleFile2 = Files.createFile(tempDir1.resolve("file2.txt"));
 
-            // Redirect output to capture it for testing
-            System.setOut(new PrintStream(outputStream));
-        }
+        // Redirect output to capture it for testing
+        System.setOut(new PrintStream(outputStream));
+    }
 
-        @AfterEach
-        public void tearDown4() throws IOException {
-            // Clean up the temporary directory and files
-            Files.deleteIfExists(hiddenFile);
-            Files.deleteIfExists(visibleFile1);
-            Files.deleteIfExists(visibleFile2);
-            Files.deleteIfExists(tempDir);
+    @AfterEach
+    public void tearDown4() throws IOException {
+        // Clean up the temporary directory and files
+        Files.deleteIfExists(hiddenFile);
+        Files.deleteIfExists(visibleFile1);
+        Files.deleteIfExists(visibleFile2);
+        Files.deleteIfExists(tempDir1);
 
-            // Reset the output stream
-            System.setOut(originalOut);
-        }
+        // Reset the output stream
+        System.setOut(originalOut);
+    }
 
-        @Test
-        public void testListDirectoryWithoutOptions() {
-            String[] parts = {tempDir1.toString()};
-            CLI.executeCommand("ls" + " " + parts[0]);
-            String output = outputStream.toString();
+    @Test
+    public void testListDirectoryWithoutOptions() {
+        String[] parts = {tempDir1.toString()};
+        CLI.executeCommand("ls" + " " + parts[0]);
+        String output = outputStream.toString();
 
-            // Verify the output contains only visible files
-            assertTrue(output.contains("file1.txt"));
-            assertTrue(output.contains("file2.txt"));
-            assertFalse(output.contains(".hiddenFile"));
-        }
+        // Verify the output contains only visible files
+        assertTrue(output.contains("file1.txt"));
+        assertTrue(output.contains("file2.txt"));
+        assertFalse(output.contains(".hiddenFile"));
+    }
 
-        @Test
-        public void testListDirectoryWithShowAll() {
-            String[] parts = {tempDir1.toString(), "-a"};
-            CLI.executeCommand("ls" + " " + parts[0]+" " + parts[1]);
-            String output = outputStream.toString();
+    @Test
+    public void testListDirectoryWithShowAll() {
+        String[] parts = {tempDir1.toString(), "-a"};
+        CLI.executeCommand("ls" + " " + parts[0] + " " + parts[1]);
+        String output = outputStream.toString();
 
-            // Verify the output contains hidden and visible files
-            assertTrue(output.contains(".hiddenFile"));
-            assertTrue(output.contains("file1.txt"));
-            assertTrue(output.contains("file2.txt"));
-        }
+        // Verify the output contains hidden and visible files
+        assertTrue(output.contains(".hiddenFile"));
+        assertTrue(output.contains("file1.txt"));
+        assertTrue(output.contains("file2.txt"));
+    }
 
-        @Test
-        public void testListDirectoryWithReverseOrder() {
-            String[] parts = {tempDir1.toString(), "-r"};
-            CLI.executeCommand("ls" + " " + parts[0]+" " + parts[1]);
-            String output = outputStream.toString();
+    @Test
+    public void testListDirectoryWithReverseOrder() {
+        String[] parts = {tempDir1.toString(), "-r"};
+        CLI.executeCommand("ls" + " " + parts[0] + " " + parts[1]);
+        String output = outputStream.toString();
 
-            // Split the output by lines and check the order
-            String[] lines = output.split(System.lineSeparator());
-            assertEquals("file2.txt", lines[1]); // Assuming output is sorted and reversed
-            assertEquals("file1.txt", lines[2]);
-        }
+        // Split the output by lines and check the order
+        String[] lines = output.split(System.lineSeparator());
+        assertEquals("file2.txt", lines[1]); // Assuming output is sorted and reversed
+        assertEquals("file1.txt", lines[2]);
+    }
 
-        @Test
-        public void testListNonExistentDirectory() {
-            String[] parts = {"non_existent_directory"};
-            CLI.executeCommand("ls" + " " + parts[0]);
-            String output = outputStream.toString();
+    @Test
+    public void testListNonExistentDirectory() {
+        String[] parts = {"non_existent_directory"};
+        CLI.executeCommand("ls" + " " + parts[0]);
+        String output = outputStream.toString();
 
-            File dir = new File(parts[0]);
-            // Verify the output indicates that the directory cannot be read
-            assertTrue(output.contains("No files found or directory cannot be read."));
+        File dir = new File(parts[0]);
+        // Verify the output indicates that the directory cannot be read
+        assertTrue(output.contains("No files found or directory cannot be read."));
 
-            // Clean up
-            dir.delete();
-        }
+        // Clean up
+        dir.delete();
+    }
 
     @Test
     public void testListEmptyDirectory() throws IOException {
-        // Set up a ByteArrayOutputStream to capture output directly
-        ByteArrayOutputStream testOutput = new ByteArrayOutputStream();
-        PrintStream originalOut = System.out;
-        System.setOut(new PrintStream(testOutput));
+        outputStream.reset();
 
-        // Create a temporary empty directory
         Path emptyDir = Files.createTempDirectory("emptyDir");
-        String emptyDirPath = emptyDir.toString();
+        String[] parts = {emptyDir.toString()};
 
-        // Execute the 'ls' command
-        CLI.executeCommand("ls " + emptyDirPath);
+        // Execute the command and capture the output
+        CLI.executeCommand("ls " + parts[0]);
+        System.out.flush();
+        String output = outputStream.toString().trim();
 
-        // Restore original System.out
+        // Verify that only "Listing directory:" is printed, indicating an empty directory
+        assertTrue(output.equals("Listing directory:"), "Expected only 'Listing directory:' for an empty directory.");
+
+        // Clean up after the assertion
+        Files.delete(emptyDir);
+    }
+
+    // Redirect test
+    ByteArrayOutputStream outContent;
+
+    @BeforeEach
+    public void setUp3() {
+        outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
+    }
+
+    @AfterEach
+    public void tearDown5() {
         System.setOut(originalOut);
+    }
 
-        // Capture the output
-        String output = testOutput.toString().trim();
-        System.out.println("Actual Output: " + output);
+    @Test
+    public void testRedirectCommand2() throws IOException {
+        // Create a test file
+        File testFile = new File("test_output.txt");
+        if (testFile.exists()) {
+            testFile.delete();
+        }
+
+        // Execute the redirect command
+        CLI.redirectCommand("pwd > test_output.txt");
+
+        // Verify the file content
+        try (BufferedReader br = new BufferedReader(new FileReader(testFile))) {
+            String line = br.readLine();
+            assertTrue(line.contains(System.getProperty("user.dir")));
+        }
+
+        // Clean up
+        testFile.delete();
+    }
+
+    @Test
+    public void testAppendRedirectCommand() throws IOException {
+        File testFile = new File("test_append_output.txt");
+        testFile.delete(); // Ensure the file is clean before the test
+
+        // Initial write
+        CLI.redirectCommand("pwd > test_append_output.txt");
+
+        // Append to the file
+        CLI.redirectCommand("ls >> test_append_output.txt");
+
+        // Verify the file content
+        try (BufferedReader br = new BufferedReader(new FileReader(testFile))) {
+            assertTrue(br.readLine().contains(System.getProperty("user.dir")));
+            assertTrue(br.readLine().contains("Listing directory:"));
+        }
+
+        // Clean up
+        testFile.delete();
+    }
+
+    // pipe test
+    private final ByteArrayOutputStream pipeOutput = new ByteArrayOutputStream(); // Captures System.out output
+    private final PrintStream originalSystemOut = System.out; // Original System.out variable
+
+    private final ByteArrayOutputStream errContent = new ByteArrayOutputStream(); // Captures System.err output
+    private final PrintStream originalErr = System.err;
+
+    private File testDir;
+
+    @BeforeEach
+    public void setUp5() throws IOException {
+        // Redirect System.out and System.err to capture output
+        System.setOut(new PrintStream(pipeOutput));
+        System.setErr(new PrintStream(errContent));
+
+        // Create a temporary directory for testing
+        testDir = new File("testDir");
+        if (!testDir.exists()) {
+            testDir.mkdir(); // Create the directory
+        }
+
+        // Create known files in the temporary directory
+        new File(testDir, "file1.txt").createNewFile();
+        new File(testDir, "file2.txt").createNewFile();
+        new File(testDir, "directory1").mkdir(); // Create a subdirectory
+
+        // Change the working directory to the test directory
+        System.setProperty("user.dir", testDir.getAbsolutePath());
+    }
+
+    @AfterEach
+    public void tearDown6() {
+        // Restore original System.out and System.err
+        System.setOut(originalSystemOut);
+        System.setErr(originalErr);
+
+        // Clean up the temporary directory
+        for (File file : testDir.listFiles()) {
+            if (file.isDirectory()) {
+                for (File innerFile : file.listFiles()) {
+                    innerFile.delete();
+                }
+            }
+            file.delete();
+        }
+        testDir.delete();
+    }
+
+    @Test
+    public void testInvalidPipeCommand() {
+        String command = "ls |"; // Invalid command
+        CLI.pipeCommand(command, System.err); // Execute the command
+
+        // Check for the specific error message with newline
+        assertEquals("Invalid pipe command. Use format: command1 | command2", errContent.toString().trim()); // Check errContent
+    }
+
+    @Test
+    public void testUnknownCommandInPipe() {
+        String command = "ls | unknownCommand"; // Simulating unknown command
+        CLI.pipeCommand(command, System.err); // Execute the command
+
+        // Check for the specific error message with the correct command
+        assertEquals("Unknown command for piped input: unknownCommand", errContent.toString().trim()); // Include command in the message
     }
 }
+
