@@ -1,11 +1,8 @@
 package org.os;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -58,8 +55,6 @@ public class CommandLIneInterpreterTest {
         String[] displayParts = {"cat", "testFile.txt"};
         CLI.displayFile(displayParts);
 
-        // Validate output (capture System.out if necessary)
-
         // Cleanup after test
         new File("testFile.txt").delete();
     }
@@ -91,10 +86,7 @@ public class CommandLIneInterpreterTest {
         System.setOut(new PrintStream(outputStream));
 
         try {
-            // Act
             CLI.executeCommand("pwd");
-
-            // Assert
             String expectedOutput = System.getProperty("user.dir") + System.lineSeparator();
             assertEquals(expectedOutput, outputStream.toString());
         } finally {
@@ -108,14 +100,9 @@ public class CommandLIneInterpreterTest {
     public void testCreateDirectory() {
         String testDirName = "testDir";
 
-        // Act
         CLI.executeCommand("mkdir " + testDirName);
-
-        // Assert
         File dir = new File(testDirName);
         assertTrue(dir.exists(), "Directory should have been created");
-
-        // Cleanup
         dir.delete();
     }
 
@@ -145,18 +132,14 @@ public class CommandLIneInterpreterTest {
     @Test
     public void testRemoveEmptyDirectory() {
         String[] parts = {"rmdir", tempDir.toString()};
-        CLI.removeDirectory(parts); // Replace with the actual class method if needed
-
-        // Assert the directory no longer exists
+        CLI.removeDirectory(parts);
         assertFalse(Files.exists(tempDir), "Empty directory should be removed successfully.");
     }
 
     @Test
     public void testRemoveNonEmptyDirectory() {
         String[] parts = {"rmdir", nonEmptyDir.toString()};
-        CLI.removeDirectory(parts); // Replace with the actual class method if needed
-
-        // Assert the directory still exists since it was not empty
+        CLI.removeDirectory(parts);
         assertTrue(Files.exists(nonEmptyDir), "Non-empty directory should not be removed.");
     }
 
@@ -175,9 +158,7 @@ public class CommandLIneInterpreterTest {
     @Test
     public void testCreateFile() {
         String[] parts = {"touch", testFileName};
-        CLI.touchFile(parts); // Replace with the actual class method if needed
-
-        // Assert that the file has been created
+        CLI.touchFile(parts);
         File file = new File(testFileName);
         assertTrue(file.exists(), "File should be created by the touch command.");
     }
@@ -192,8 +173,6 @@ public class CommandLIneInterpreterTest {
         String[] parts = {"touch", testFileName};
         CLI.touchFile(parts); // First call to create the file
         CLI.touchFile(parts); // Second call to ensure no error with existing file
-
-        // Assert that the file still exists and is unaffected by a second touch call
         assertTrue(file.exists(), "File should remain after calling touch on an existing file.");
     }
 
@@ -223,8 +202,6 @@ public class CommandLIneInterpreterTest {
     public void testChangeToValidDirectory() {
         String[] parts = {"cd", tempDir.toString()};
         CLI.changeDirectory(parts);
-
-        // Verify the current directory has been changed
         assertEquals(tempDir.toString(), System.getProperty("user.dir"));
     }
 
@@ -232,8 +209,6 @@ public class CommandLIneInterpreterTest {
     public void testChangeToInvalidDirectory() {
         String[] parts = {"cd", "invalid_directory"};
         CLI.changeDirectory(parts);
-
-        // Verify the current directory has not been changed
         assertEquals(originalDir.toString(), System.getProperty("user.dir"));
     }
 
@@ -241,8 +216,6 @@ public class CommandLIneInterpreterTest {
     public void testChangeToParentDirectory() {
         String[] parts = {"cd", ".."};
         CLI.changeDirectory(parts);
-
-        // Verify the current directory is now the parent directory of the original
         assertEquals(originalDir.getParent().toString(), System.getProperty("user.dir"));
     }
 
@@ -254,7 +227,6 @@ public class CommandLIneInterpreterTest {
 
         CLI.executeCommand("help");
 
-        // Verify output contains information about commands
         String output = outputStream.toString();
         assertTrue(output.contains("cd"));
         assertTrue(output.contains("exit"));
@@ -357,12 +329,10 @@ public class CommandLIneInterpreterTest {
         Path emptyDir = Files.createTempDirectory("emptyDir");
         String[] parts = {emptyDir.toString()};
 
-        // Execute the command and capture the output
         CLI.executeCommand("ls " + parts[0]);
         System.out.flush();
         String output = outputStream.toString().trim();
 
-        // Verify that only "Listing directory:" is printed, indicating an empty directory
         assertTrue(output.equals("Listing directory:"), "Expected only 'Listing directory:' for an empty directory.");
 
         // Clean up after the assertion
@@ -385,16 +355,13 @@ public class CommandLIneInterpreterTest {
 
     @Test
     public void testRedirectCommand2() throws IOException {
-        // Create a test file
         File testFile = new File("test_output.txt");
         if (testFile.exists()) {
             testFile.delete();
         }
 
-        // Execute the redirect command
         CLI.redirectCommand("pwd > test_output.txt");
 
-        // Verify the file content
         try (BufferedReader br = new BufferedReader(new FileReader(testFile))) {
             String line = br.readLine();
             assertTrue(line.contains(System.getProperty("user.dir")));
@@ -409,13 +376,9 @@ public class CommandLIneInterpreterTest {
         File testFile = new File("test_append_output.txt");
         testFile.delete(); // Ensure the file is clean before the test
 
-        // Initial write
         CLI.redirectCommand("pwd > test_append_output.txt");
-
-        // Append to the file
         CLI.redirectCommand("ls >> test_append_output.txt");
 
-        // Verify the file content
         try (BufferedReader br = new BufferedReader(new FileReader(testFile))) {
             assertTrue(br.readLine().contains(System.getProperty("user.dir")));
             assertTrue(br.readLine().contains("Listing directory:"));
@@ -426,42 +389,36 @@ public class CommandLIneInterpreterTest {
     }
 
     // pipe test
-    private final ByteArrayOutputStream pipeOutput = new ByteArrayOutputStream(); // Captures System.out output
-    private final PrintStream originalSystemOut = System.out; // Original System.out variable
+    private final ByteArrayOutputStream pipeOutput = new ByteArrayOutputStream();
+    private final PrintStream originalSystemOut = System.out;
 
-    private final ByteArrayOutputStream errContent = new ByteArrayOutputStream(); // Captures System.err output
+    private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
     private final PrintStream originalErr = System.err;
 
     private File testDir;
 
     @BeforeEach
     public void setUp5() throws IOException {
-        // Redirect System.out and System.err to capture output
         System.setOut(new PrintStream(pipeOutput));
         System.setErr(new PrintStream(errContent));
 
-        // Create a temporary directory for testing
         testDir = new File("testDir");
         if (!testDir.exists()) {
             testDir.mkdir(); // Create the directory
         }
 
-        // Create known files in the temporary directory
         new File(testDir, "file1.txt").createNewFile();
         new File(testDir, "file2.txt").createNewFile();
         new File(testDir, "directory1").mkdir(); // Create a subdirectory
 
-        // Change the working directory to the test directory
         System.setProperty("user.dir", testDir.getAbsolutePath());
     }
 
     @AfterEach
     public void tearDown6() {
-        // Restore original System.out and System.err
         System.setOut(originalSystemOut);
         System.setErr(originalErr);
 
-        // Clean up the temporary directory
         for (File file : testDir.listFiles()) {
             if (file.isDirectory()) {
                 for (File innerFile : file.listFiles()) {
@@ -475,20 +432,18 @@ public class CommandLIneInterpreterTest {
 
     @Test
     public void testInvalidPipeCommand() {
-        String command = "ls |"; // Invalid command
-        CLI.pipeCommand(command, System.err); // Execute the command
+        String command = "ls |";
+        CLI.pipeCommand(command, System.err);
 
-        // Check for the specific error message with newline
-        assertEquals("Invalid pipe command. Use format: command1 | command2", errContent.toString().trim()); // Check errContent
+        assertEquals("Invalid pipe command. Use format: command1 | command2", errContent.toString().trim());
     }
 
     @Test
     public void testUnknownCommandInPipe() {
-        String command = "ls | unknownCommand"; // Simulating unknown command
-        CLI.pipeCommand(command, System.err); // Execute the command
+        String command = "ls | unknownCommand";
+        CLI.pipeCommand(command, System.err);
 
-        // Check for the specific error message with the correct command
-        assertEquals("Unknown command for piped input: unknownCommand", errContent.toString().trim()); // Include command in the message
+        assertEquals("Unknown command for piped input: unknownCommand", errContent.toString().trim());
     }
 }
 
