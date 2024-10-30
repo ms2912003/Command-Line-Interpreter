@@ -32,8 +32,6 @@ public class CLI {
         if (command.isEmpty()) {
             return;
         }
-
-        // Handle redirection and pipe commands first
         if (command.contains("|")) {
             pipeCommand(command,System.err);
             return;
@@ -129,12 +127,12 @@ public class CLI {
         String targetDir = parts[1];
         try {
             Path currentPath = Paths.get(System.getProperty("user.dir"));
-            // If the targetDir starts with "..", resolve to the parent directory
+            // If the targetDir starts with "..", go to the parent directory
             Path newPath;
             if (targetDir.equals("..")) {
                 newPath = currentPath.getParent();
             } else {
-                // Resolve the new path based on the current working directory
+                // Go the new path based on the current working directory
                 newPath = Paths.get(System.getProperty("user.dir")).resolve(targetDir).normalize();
             }
 
@@ -213,7 +211,6 @@ public class CLI {
 
     static void displayFile(String[] parts) {
         if (parts.length > 1) {
-            // Handle the case where file names are provided
             for (int i = 1; i < parts.length; i++) {
                 String fileName = parts[i];
                 try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
@@ -226,7 +223,6 @@ public class CLI {
                 }
             }
         } else {
-            // Handle the case with no arguments
             System.out.println("Enter text :");
             try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
                 String line;
@@ -259,7 +255,7 @@ public class CLI {
                 destination = new File(destination, source.getName());
             }
 
-            // If the destination already exists, prompt the user for confirmation
+            // If the destination already exists, ask for the user's confirmation
             if (destination.exists()) {
                 System.out.print("Overwrite " + destination.getName() + "? (y/n): ");
                 Scanner scanner = new Scanner(System.in);
@@ -270,7 +266,6 @@ public class CLI {
                 }
             }
 
-            // Attempt to move or rename
             if (source.renameTo(destination)) {
                 System.out.println("Moved/Renamed: " + source.getName() + " to " + destination.getAbsolutePath());
             } else {
@@ -342,7 +337,6 @@ public class CLI {
         boolean showAll = false; // Option to show hidden files
         boolean reverseOrder = false; // Option to reverse order
 
-        // Check for options
         for (int i = 1; i < parts.length; i++) {
             if ("-a".equals(parts[i])) {
                 showAll = true; // Show hidden files
@@ -379,7 +373,6 @@ public class CLI {
         }
     }
 
-    // Handle output redirection ('>' and '>>')
     static void redirectCommand(String command) {
         // Split command around '>' and trim the parts
         String[] parts = command.contains(">>") ? command.split(">>") : command.split(">");
@@ -391,14 +384,11 @@ public class CLI {
         // Create a new File object for the target file
         File outputFile = new File(rightCommand);
 
-        // Print debug information for troubleshooting
         System.out.println("Redirecting output to: " + outputFile.getAbsolutePath());
 
-        // Open a PrintStream to the file
         try (PrintStream ps = new PrintStream(new FileOutputStream(outputFile, append))) {
-            // Temporarily redirect System.out to the file
             PrintStream originalOut = System.out;
-            System.setOut(ps); // Redirect to the file
+            System.setOut(ps);
 
             // Execute the command (left part)
             executeCommand(leftCommand); // This will output to the file
@@ -407,35 +397,26 @@ public class CLI {
             System.setOut(originalOut);
             System.out.println("Redirection completed successfully.");
         } catch (FileNotFoundException e) {
-            // Detailed error handling for invalid file path or permissions
             System.err.println("Error with file redirection: Unable to write to " + rightCommand + ". File not found or access denied.");
             e.printStackTrace();
         } catch (IOException e) {
-            System.err.println("Error with file redirection: " + e.getMessage());
         }
     }
 
-    // Example of how to execute commands (assuming you have an implementation)
     static void executeCommand2(String command) {
-        // Here you would handle the command execution logic
-        // For demonstration, we can just print the command
         if (command.startsWith("cat")) {
-            // Handle cat command separately, e.g., display file contents
-            // For now, we will just print the command
             System.out.println("Executing command: " + command);
-            // You can add the actual logic to read from files here
         } else {
             System.out.println("Executing command: " + command);
         }
     }
 
-    // Handle piping ('|')
     static void pipeCommand(String command, PrintStream output) {
         String[] commands = command.split("\\|");
         if (commands.length != 2) {
-            output.println("Invalid pipe command. Use format: command1 | command2");            return;
+            output.println("Invalid pipe command. Use format: command1 | command2");
+            return;
         }
-
         // Capture output of the first command
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintStream ps = new PrintStream(baos);
@@ -455,11 +436,9 @@ public class CLI {
     }
 
     static void executeSingleCommand(String command) {
-        // Handle specific commands (for demonstration)
         if (command.equals("ls")) {
             listDirectory(new String[]{"."});
         } else if (command.startsWith("cat")) {
-            // Simulated 'cat' command logic
             String[] parts = command.split(" ");
             if (parts.length > 1) {
                 String fileName = parts[1];
