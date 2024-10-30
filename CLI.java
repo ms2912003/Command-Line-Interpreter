@@ -35,7 +35,7 @@ public class CLI {
 
         // Handle redirection and pipe commands first
         if (command.contains("|")) {
-            pipeCommand(command);
+            pipeCommand(command,System.err);
             return;
         } else if (command.contains(">")) {
             redirectCommand(command);
@@ -430,11 +430,10 @@ public class CLI {
     }
 
     // Handle piping ('|')
-    static void pipeCommand(String command) {
+    static void pipeCommand(String command, PrintStream output) {
         String[] commands = command.split("\\|");
         if (commands.length != 2) {
-            System.err.println("Invalid pipe command. Use format: command1 | command2");
-            return;
+            output.println("Invalid pipe command. Use format: command1 | command2");            return;
         }
 
         // Capture output of the first command
@@ -452,7 +451,7 @@ public class CLI {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
         // Execute the second command with the output from the first command
-        executeWithInput(commands[1].trim(), reader);
+        executeWithInput(commands[1].trim(), reader, output);
     }
 
     static void executeSingleCommand(String command) {
@@ -472,7 +471,7 @@ public class CLI {
         }
     }
 
-    static void executeWithInput(String command, BufferedReader inputReader) {
+    static void executeWithInput(String command, BufferedReader inputReader, PrintStream output) {
         try {
             if (command.equals("cat")) {
                 String line;
@@ -480,11 +479,10 @@ public class CLI {
                     System.out.println(line); // Output the content passed from the first command
                 }
             } else {
-                System.out.println("Unknown command for piped input: " + command);
+                output.println("Unknown command for piped input: " + command);
             }
         } catch (IOException e) {
-            System.err.println("Error reading input: " + e.getMessage());
-        }
+            output.println("Error reading input: " + e.getMessage());        }
     }
 }
 
