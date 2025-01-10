@@ -176,7 +176,7 @@ public class CommandLIneInterpreterTest {
         assertTrue(file.exists(), "File should remain after calling touch on an existing file.");
     }
 
-    // Create Directory Test
+    // Change Directory Test
     private Path originalDir;
     private Path tempDir2;
 
